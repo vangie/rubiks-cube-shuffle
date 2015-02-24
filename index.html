@@ -8,310 +8,310 @@
         <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
         <script type="text/coffeescript">
 
-        	directions = ['N', 'E', 'S', 'W'];
+            directions = ['N', 'E', 'S', 'W'];
 
-        	direction2deg = {
-        		'N' : '0deg'
-        		'E' : '90deg'
-        		'S' : '180deg'
-        		'W' : '270deg'
-        	}
+            direction2deg = {
+                'N' : '0deg'
+                'E' : '90deg'
+                'S' : '180deg'
+                'W' : '270deg'
+            }
 
-        	face2color = {
-        				'up'	: 'yellow'
-        				'down'	: 'white'
-        				'front'	: 'blue'
-        				'back'	: 'green'
-        				'left'	: 'orange'
-        				'right'	: 'red'
-        			}
+            face2color = {
+                'up'    : 'yellow'
+                'down'  : 'white'
+                'front' : 'blue'
+                'back'  : 'green'
+                'left'  : 'orange'
+                'right' : 'red'
+            }
 
-        	class Block 
-        		constructor: (@color, @label, @direction)->
+            class Block 
+                constructor: (@color, @label, @direction)->
 
-        		rotate: (step = 1) ->
-        			idx = directions.indexOf(@direction)
-        			@direction = directions[(idx + step) % 4]
+                rotate: (step = 1) ->
+                    idx = directions.indexOf(@direction)
+                    @direction = directions[(idx + step) % 4]
 
-        	class Face
-        		constructor: (@id, color, labels)->
-        			@blocks = _.range(9).map((n) ->
-	        			new Block(color, labels[n], 'N')
-	        		)
+            class Face
+                constructor: (@id, color, labels)->
+                    @blocks = _.range(9).map((n) ->
+                        new Block(color, labels[n], 'N')
+                    )
 
-	        	replace: (line, lineBlocks) ->
-	        		moveOutBlocks = []
-	        		switch line
-	        			when 'top'
-	        				moveOutBlocks = Array::splice.apply @blocks, [0, 3].concat(lineBlocks)
-	        			when 'bottom'
-	        				moveOutBlocks = Array::splice.apply @blocks, [6, 3].concat(lineBlocks)
-	        			when 'left'
-	        				moveOutBlocks.push(@blocks.splice(0, 1, lineBlocks[0])[0])
-	        				moveOutBlocks.push(@blocks.splice(3, 1, lineBlocks[1])[0])
-	        				moveOutBlocks.push(@blocks.splice(6, 1, lineBlocks[2])[0])
-	        			when 'right'
-	        				moveOutBlocks.push(@blocks.splice(2, 1, lineBlocks[0])[0])
-	        				moveOutBlocks.push(@blocks.splice(5, 1, lineBlocks[1])[0])
-	        				moveOutBlocks.push(@blocks.splice(8, 1, lineBlocks[2])[0])
+                replace: (line, lineBlocks) ->
+                    moveOutBlocks = []
+                    switch line
+                        when 'top'
+                            moveOutBlocks = Array::splice.apply @blocks, [0, 3].concat(lineBlocks)
+                        when 'bottom'
+                            moveOutBlocks = Array::splice.apply @blocks, [6, 3].concat(lineBlocks)
+                        when 'left'
+                            moveOutBlocks.push(@blocks.splice(0, 1, lineBlocks[0])[0])
+                            moveOutBlocks.push(@blocks.splice(3, 1, lineBlocks[1])[0])
+                            moveOutBlocks.push(@blocks.splice(6, 1, lineBlocks[2])[0])
+                        when 'right'
+                            moveOutBlocks.push(@blocks.splice(2, 1, lineBlocks[0])[0])
+                            moveOutBlocks.push(@blocks.splice(5, 1, lineBlocks[1])[0])
+                            moveOutBlocks.push(@blocks.splice(8, 1, lineBlocks[2])[0])
 
-	        		moveOutBlocks
+                    moveOutBlocks
 
-	        	rotate: =>
-	        		blocks = []
-	        		blocks.length = 9
-	        		_.range(9).map((n)=>
-	        			x = n % 3
-	        			y = Math.floor(n / 3)
+                rotate: =>
+                    blocks = []
+                    blocks.length = 9
+                    _.range(9).map((n)=>
+                        x = n % 3
+                        y = Math.floor(n / 3)
 
-	        			newX = 3 - y - 1
-	        			newY = x
+                        newX = 3 - y - 1
+                        newY = x
 
-	        			blocks[ 3 * newY + newX ] = @blocks[n]
-	        		)
-	        		@blocks = blocks
-	        		_.each(@blocks, (block)-> block.rotate())
+                        blocks[ 3 * newY + newX ] = @blocks[n]
+                    )
+                    @blocks = blocks
+                    _.each(@blocks, (block)-> block.rotate())
 
-	        	render: =>
-	        		$face = $(".cube > .face.#{@id}").empty()
-	        		_.each(@blocks, (block)=>
-	        			$('<div/>').addClass('block')
-	        			.css({
-	        				backgroundColor: block.color
-	        				transform: "rotate(#{direction2deg[block.direction]})"
-	        				color: "#{if block.color in ['blue', 'green', 'red'] then 'white' else 'black'}"
-	        			}).append($('<span/>').addClass('label').text(block.label))
-	        			.appendTo($face)
-	        		)
-
-
-        	class Cube 
-        		constructor: (@labelsMap)->
-        			_.each(face2color, (color, face) =>
-        				@[face] = new Face(face, color, @labels(face))
-        			)
-        	
-
-        		labels: (face) ->
-        			@labelsMap[face] || _.range(9).map(-> '')
-
-        		rotateUp: =>
-        			emptyLine = ['','','']
-        			tmpLine = @back.replace('top', emptyLine)
-        			tmpLine = @right.replace('top', tmpLine)
-        			tmpLine = @front.replace('top', tmpLine)
-        			tmpLine = @left.replace('top', tmpLine)
-        			@back.replace('top', tmpLine)
-        			@up.rotate()
-
-        		rotateFront: =>
-        			emptyLine = ['','','']
-        			tmpLine = @up.replace('bottom', emptyLine);
-
-        			_.each(tmpLine, (block)->block.rotate())
-        			tmpLine = @right.replace('left', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate())
-        			tmpLine.reverse()
-        			tmpLine = @down.replace('top', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate())
-        			tmpLine = @left.replace('right', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate())
-        			tmpLine.reverse()
-        			@up.replace('bottom', tmpLine);
-
-        			@front.rotate()
-
-        		rotateRight: =>
-        			emptyLine = ['','','']
-        			tmpLine = @up.replace('right', emptyLine);
-
-        			_.each(tmpLine, (block)->block.rotate(2))
-        			tmpLine.reverse()
-        			tmpLine = @back.replace('left', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate(2))
-        			tmpLine.reverse()
-        			tmpLine = @down.replace('right', tmpLine)
-
-        			tmpLine = @front.replace('right', tmpLine)
-        			@up.replace('right', tmpLine)
-
-        			@right.rotate()
-
-        		rotateDown: =>
-        			emptyLine = ['','','']
-        			tmpLine = @front.replace('bottom', emptyLine);
-        			tmpLine = @right.replace('bottom', tmpLine);
-        			tmpLine = @back.replace('bottom', tmpLine);
-        			tmpLine = @left.replace('bottom', tmpLine);
-        			@front.replace('bottom', tmpLine);
-
-        			@down.rotate()
-
-        		rotateBack: =>
-        			emptyLine = ['','','']
-
-        			tmpLine = @up.replace('top', emptyLine)
-
-        			_.each(tmpLine, (block)->block.rotate(3))
-        			tmpLine.reverse()
-        			tmpLine = @left.replace('left', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate(3))
-        			tmpLine = @down.replace('bottom', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate(3))
-        			tmpLine.reverse()
-        			tmpLine = @right.replace('right', tmpLine)
-
-        			_.each(tmpLine, (block)->block.rotate(3))
-        			@up.replace('top', tmpLine)
-
-        			@back.rotate()
+                render: =>
+                    $face = $(".cube > .face.#{@id}").empty()
+                    _.each(@blocks, (block)=>
+                        $('<div/>').addClass('block')
+                        .css({
+                            backgroundColor: block.color
+                            transform: "rotate(#{direction2deg[block.direction]})"
+                            color: "#{if block.color in ['blue', 'green', 'red'] then 'white' else 'black'}"
+                        }).append($('<span/>').addClass('label').text(block.label))
+                        .appendTo($face)
+                    )
 
 
-        		rotateLeft: =>
-        			emptyLine = ['', '', '']
-        			tmpLine = @up.replace('left', emptyLine)
+            class Cube 
+                constructor: (@labelsMap)->
+                    _.each(face2color, (color, face) =>
+                        @[face] = new Face(face, color, @labels(face))
+                    )
+            
 
-        			tmpLine = @front.replace('left', tmpLine)
+                labels: (face) ->
+                    @labelsMap[face] || _.range(9).map(-> '')
 
-        			tmpLine = @down.replace('left', tmpLine)
+                rotateUp: =>
+                    emptyLine = ['','','']
+                    tmpLine = @back.replace('top', emptyLine)
+                    tmpLine = @right.replace('top', tmpLine)
+                    tmpLine = @front.replace('top', tmpLine)
+                    tmpLine = @left.replace('top', tmpLine)
+                    @back.replace('top', tmpLine)
+                    @up.rotate()
 
-        			_.each(tmpLine, (block)->block.rotate(2))
-        			tmpLine.reverse()
-        			tmpLine = @back.replace('right', tmpLine)
+                rotateFront: =>
+                    emptyLine = ['','','']
+                    tmpLine = @up.replace('bottom', emptyLine);
 
-        			_.each(tmpLine, (block)->block.rotate(2))
-        			tmpLine.reverse()
-        			@up.replace('left',tmpLine)
+                    _.each(tmpLine, (block)->block.rotate())
+                    tmpLine = @right.replace('left', tmpLine)
 
-        			@left.rotate()
+                    _.each(tmpLine, (block)->block.rotate())
+                    tmpLine.reverse()
+                    tmpLine = @down.replace('top', tmpLine)
 
-        		shuffle: =>
-        			rotates = []
-        			for k of Cube::
-        				rotates.push(k) if k.indexOf('rotate') is 0	
-        			times = _.random(20, 100) 
-        			_.range(times).map(=>
-        				_.range(_.random(1, 3)).map(=>
-        					do @[rotates[_.random(0, 5)]]
-        				)
-        			)
+                    _.each(tmpLine, (block)->block.rotate())
+                    tmpLine = @left.replace('right', tmpLine)
+
+                    _.each(tmpLine, (block)->block.rotate())
+                    tmpLine.reverse()
+                    @up.replace('bottom', tmpLine);
+
+                    @front.rotate()
+
+                rotateRight: =>
+                    emptyLine = ['','','']
+                    tmpLine = @up.replace('right', emptyLine);
+
+                    _.each(tmpLine, (block)->block.rotate(2))
+                    tmpLine.reverse()
+                    tmpLine = @back.replace('left', tmpLine)
+
+                    _.each(tmpLine, (block)->block.rotate(2))
+                    tmpLine.reverse()
+                    tmpLine = @down.replace('right', tmpLine)
+
+                    tmpLine = @front.replace('right', tmpLine)
+                    @up.replace('right', tmpLine)
+
+                    @right.rotate()
+
+                rotateDown: =>
+                    emptyLine = ['','','']
+                    tmpLine = @front.replace('bottom', emptyLine);
+                    tmpLine = @right.replace('bottom', tmpLine);
+                    tmpLine = @back.replace('bottom', tmpLine);
+                    tmpLine = @left.replace('bottom', tmpLine);
+                    @front.replace('bottom', tmpLine);
+
+                    @down.rotate()
+
+                rotateBack: =>
+                    emptyLine = ['','','']
+
+                    tmpLine = @up.replace('top', emptyLine)
+
+                    _.each(tmpLine, (block)->block.rotate(3))
+                    tmpLine.reverse()
+                    tmpLine = @left.replace('left', tmpLine)
+
+                    _.each(tmpLine, (block)->block.rotate(3))
+                    tmpLine = @down.replace('bottom', tmpLine)
+
+                    _.each(tmpLine, (block)->block.rotate(3))
+                    tmpLine.reverse()
+                    tmpLine = @right.replace('right', tmpLine)
+
+                    _.each(tmpLine, (block)->block.rotate(3))
+                    @up.replace('top', tmpLine)
+
+                    @back.rotate()
 
 
-        		render: =>
-        			_.each(face2color, (color, face)=>
-        				@[face].render()
-        			)       			
+                rotateLeft: =>
+                    emptyLine = ['', '', '']
+                    tmpLine = @up.replace('left', emptyLine)
 
-        	window.cube = cube = new Cube(_.mapObject(face2color, ->_.range(9).map((n)-> n+1)))
-        	#window.cube = cube = new Cube({'front': _.range(9).map((n)-> n+1)})
+                    tmpLine = @front.replace('left', tmpLine)
 
-        	$(->
-        		window.cube.render()
-        		for k,v of Cube::
-        			if k.indexOf('rotate') is 0
-        				do (k,v)->
-        					$('<button/>').text(k)
-        					.click(->
-        						v.apply(window.cube)
-        						window.cube.render()
-        					)
-        					.appendTo($('body'))
-        		$('<button/>').text('shuffle')
-        			.click(-> 
-        				window.cube.shuffle()
-        				window.cube.render()
-        			)
-        			.appendTo($('body'))
-        		$('#initial').click(->
-        			keycode = $('#keycode').val().split('').slice(0,8)
-        			window.cube = cube = new Cube({
-        				'back': [
-	        				keycode[7], keycode[0], keycode[1]
-	        				keycode[6], null, 		keycode[2]
-	        				keycode[5], keycode[4], keycode[3] 
-        				] 
-        			})
-        			window.cube.render()
-        		)
-        		$('#reset').click(->
-        			window.cube = cube = new Cube(_.mapObject(face2color, ->_.range(9).map((n)-> n+1)))
-        			window.cube.render()
-        		)
+                    tmpLine = @down.replace('left', tmpLine)
 
-        	)
+                    _.each(tmpLine, (block)->block.rotate(2))
+                    tmpLine.reverse()
+                    tmpLine = @back.replace('right', tmpLine)
+
+                    _.each(tmpLine, (block)->block.rotate(2))
+                    tmpLine.reverse()
+                    @up.replace('left',tmpLine)
+
+                    @left.rotate()
+
+                shuffle: =>
+                    rotates = []
+                    for k of Cube::
+                        rotates.push(k) if k.indexOf('rotate') is 0 
+                    times = _.random(20, 100) 
+                    _.range(times).map(=>
+                        _.range(_.random(1, 3)).map(=>
+                            do @[rotates[_.random(0, 5)]]
+                        )
+                    )
 
 
-        		
+                render: =>
+                    _.each(face2color, (color, face)=>
+                        @[face].render()
+                    )                   
+
+            window.cube = cube = new Cube(_.mapObject(face2color, ->_.range(9).map((n)-> n+1)))
+            #window.cube = cube = new Cube({'front': _.range(9).map((n)-> n+1)})
+
+            $(->
+                window.cube.render()
+                for k,v of Cube::
+                    if k.indexOf('rotate') is 0
+                        do (k,v)->
+                            $('<button/>').text(k)
+                            .click(->
+                                v.apply(window.cube)
+                                window.cube.render()
+                            )
+                            .appendTo($('body'))
+                $('<button/>').text('shuffle')
+                    .click(-> 
+                        window.cube.shuffle()
+                        window.cube.render()
+                    )
+                    .appendTo($('body'))
+                $('#initial').click(->
+                    keycode = $('#keycode').val().split('').slice(0,8)
+                    window.cube = cube = new Cube({
+                        'back': [
+                            keycode[7], keycode[0], keycode[1]
+                            keycode[6], null,       keycode[2]
+                            keycode[5], keycode[4], keycode[3] 
+                        ] 
+                    })
+                    window.cube.render()
+                )
+                $('#reset').click(->
+                    window.cube = cube = new Cube(_.mapObject(face2color, ->_.range(9).map((n)-> n+1)))
+                    window.cube.render()
+                )
+
+            )
+
+
+                
         </script>
     </head>  
     <style type="text/css">
-    	body {
-    		background-color: #FFD55F; 
-    	}
-		.cube {
-			margin: 100px;
-			position: relative;			
-			height: 108px;
-			width: 144px;
-		}
-		.face {
-			position: absolute;
-			width: 36px;
-			height: 36px;
-			display: inline-block;
-			font-size: 0px;
-		}
-		.up {
-			left: 36px;
-		}
+        body {
+            background-color: #FFD55F; 
+        }
+        .cube {
+            margin: 100px;
+            position: relative;         
+            height: 108px;
+            width: 144px;
+        }
+        .face {
+            position: absolute;
+            width: 36px;
+            height: 36px;
+            display: inline-block;
+            font-size: 0px;
+        }
+        .up {
+            left: 36px;
+        }
 
-		.left, .front, .right, .back {
-			top: 36px;
-		}
-		.front {
-			left: 36px;
-		}
-		.right {
-			left: 72px;
-		}
-		.back {
-			left: 108px;
-		}
-		.down {
-			left: 36px;
-			top: 72px;
-		}
-		.block {
-			display: inline-block;
-			width: 10px;
-			height: 10px;
-			text-align: center;
-			margin: 1px;
-		}
-		.label {
-			display: inline-block;
-			font-size: 10px;
-			width: 10px;
-			height: 10px;
-			-webkit-transform: scale(0.83);
-    		-o-transform: scale(1);
-		}
+        .left, .front, .right, .back {
+            top: 36px;
+        }
+        .front {
+            left: 36px;
+        }
+        .right {
+            left: 72px;
+        }
+        .back {
+            left: 108px;
+        }
+        .down {
+            left: 36px;
+            top: 72px;
+        }
+        .block {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            text-align: center;
+            margin: 1px;
+        }
+        .label {
+            display: inline-block;
+            font-size: 10px;
+            width: 10px;
+            height: 10px;
+            -webkit-transform: scale(0.83);
+            -o-transform: scale(1);
+        }
     </style> 
     <body>
-    	<label>KeyCode</label><input id="keycode" /><button id="initial">initial</button><button id="reset">reset</button>
-		<div class="cube">
-			<div class="face up"></div>
-			<div class="face left"></div>
-			<div class="face front"></div>
-			<div class="face right"></div>
-			<div class="face back"></div>
-			<div class="face down"></div>
-		</div>	
+        <label>KeyCode</label><input id="keycode" /><button id="initial">initial</button><button id="reset">reset</button>
+        <div class="cube">
+            <div class="face up"></div>
+            <div class="face left"></div>
+            <div class="face front"></div>
+            <div class="face right"></div>
+            <div class="face back"></div>
+            <div class="face down"></div>
+        </div>  
     </body>
 </html>
